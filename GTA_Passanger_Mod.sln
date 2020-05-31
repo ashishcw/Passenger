@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30011.22
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GTA_Passanger_Mod", "GTA_Passanger_Mod\GTA_Passanger_Mod.csproj", "{EED6A43A-812C-4398-B4FC-5908939B9B66}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EED6A43A-812C-4398-B4FC-5908939B9B66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EED6A43A-812C-4398-B4FC-5908939B9B66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EED6A43A-812C-4398-B4FC-5908939B9B66}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EED6A43A-812C-4398-B4FC-5908939B9B66}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DB566166-3171-458F-BDDC-E53C81F9E767}
+	EndGlobalSection
+EndGlobal
