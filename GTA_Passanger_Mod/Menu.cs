@@ -38,14 +38,24 @@ namespace GTA_Passanger_Mod
 
         public void AddModMenu(UIMenu menu)
         {
-            var newitem = new UIMenuCheckboxItem("Activate Mod?", Main.Mod_Active, "Do you wish to activate the mod?");
-            menu.AddItem(newitem);
+            var modactivecheckbox = new UIMenuCheckboxItem("Activate Mod?", Main.Mod_Active, "Do you wish to activate the mod?");
+            menu.AddItem(modactivecheckbox);
+
+            var tipactivecheckbox = new UIMenuCheckboxItem("Give Tip?", Main.Mod_Active, "Do you wish to tip your riders for the ride?");
+            menu.AddItem(tipactivecheckbox);
+
             menu.OnCheckboxChange += (sender, item, checked_) =>
             {
-                if (item == newitem)
+                if (item == modactivecheckbox)
                 {
                     Main.Mod_Active = checked_;
                     UI.Notify("~r~" + main_menu.Mod_Name +" : ~b~" + Main.Mod_Active);
+                }
+
+                if (item == tipactivecheckbox)
+                {
+                    Main.Give_Tip = checked_;
+                    UI.Notify("Auto Tip : ~b~" + Main.Give_Tip);
                 }
             };
         }

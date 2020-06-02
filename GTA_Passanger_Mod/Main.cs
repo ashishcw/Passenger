@@ -12,9 +12,9 @@ namespace GTA_Passanger_Mod
     public class Main : Script
     {
 
-        public static bool Mod_Active = false;
+        public static bool Mod_Active = false, Give_Tip = false;
 
-        public Ped Player_Ped = GTA.Game.Player.Character;
+        public Ped Player_Ped;
 
         private List<Ped> all_peds = new List<Ped>();
 
@@ -25,6 +25,8 @@ namespace GTA_Passanger_Mod
         private DrivingStyle driving_style = DrivingStyle.Normal;
 
         private Vector3 Destionation;
+
+        private int ridetime_started = 0;
 
 
         public readonly string Mod_Name = "Passenger Mod";
@@ -45,7 +47,7 @@ namespace GTA_Passanger_Mod
                 if (Function.Call<bool>(Hash.IS_WAYPOINT_ACTIVE))
                 {
                     GTA.Math.Vector3 wpVec = Function.Call<GTA.Math.Vector3>(Hash.GET_BLIP_COORDS, wpBlip);
-                    Destionation = wpVec.Around(10f);
+                    Destionation = World.GetNextPositionOnStreet(wpVec.Around(10f));
                     GTA.UI.Notify("Destination Set");
                 }
             }
@@ -61,12 +63,13 @@ namespace GTA_Passanger_Mod
             {
                 if (e.KeyCode == System.Windows.Forms.Keys.X)
                 {
+                    Player_Ped = GTA.Game.Player.Character;
                     //UI.ShowSubtitle("Mod Activated : " + Mod_Name);
                     if (Player_Ped != null)
                     {
                         if (Player_Ped.IsOnFoot)
                         {   
-                            var nearest_vehicle = World.GetNearbyVehicles(Player_Ped.Position, 3f);
+                            var nearest_vehicle = World.GetNearbyVehicles(Player_Ped.Position, 4f);
 
                             for (int i = 0; i < nearest_vehicle.Length; i++)
                             {
@@ -74,17 +77,19 @@ namespace GTA_Passanger_Mod
                                 {
                                     if (nearest_vehicle[i].GetPedOnSeat(VehicleSeat.Driver) != null && nearest_vehicle[i].IsSeatFree(VehicleSeat.Any))
                                     {
-                                        all_peds = nearest_vehicle[i].Passengers.ToList();                                        
-                                        all_peds.Add(nearest_vehicle[i].GetPedOnSeat(VehicleSeat.Driver));
+                                        all_peds.Add(nearest_vehicle[i].GetPedOnSeat(VehicleSeat.Driver));                                        
+                                        foreach (var item in nearest_vehicle[i].Passengers.ToList())
+                                        {
+                                            all_peds.Add(item);
+                                        }                                        
                                         
                                         foreach (var item in all_peds)
-                                        {
-                                            Function.Call(GTA.Native.Hash.SET_RELATIONSHIP_BETWEEN_GROUPS, 2, Player_Ped.RelationshipGroup, item.RelationshipGroup);
-                                            Function.Call(GTA.Native.Hash.SET_RELATIONSHIP_BETWEEN_GROUPS, 2, item.RelationshipGroup, Player_Ped.RelationshipGroup);
-                                            //World.SetRelationshipBetweenGroups(Relationship.Like, item.RelationshipGroup, Player_Ped.RelationshipGroup);
+                                        {   
+                                            World.SetRelationshipBetweenGroups(Relationship.Like, item.RelationshipGroup, Player_Ped.RelationshipGroup);
                                             Function.Call(GTA.Native.Hash.SET_BLOCKING_OF_NON_TEMPORARY_EVENTS, item, 1);
                                             Function.Call(GTA.Native.Hash.SET_PED_COMBAT_ATTRIBUTES, item, 20, true);
-                                        }
+                                        }                                        
+                                        nearest_vehicle[i].GetPedOnSeat(VehicleSeat.Driver).Task.Wait(5000);
                                         UI.ShowSubtitle("Nearest Vehicle is : " + nearest_vehicle[i].DisplayName);
                                         if (nearest_vehicle[i].IsSeatFree(VehicleSeat.RightRear))
                                         {
@@ -103,8 +108,29 @@ namespace GTA_Passanger_Mod
                                         }
                                         else {
                                             UI.ShowSubtitle("No Seat Available");
+                                            foreach (var item in all_peds)
+                                            {
+                                                item.MarkAsNoLongerNeeded();
+                                            }
                                         }
                                         break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (Give_Tip && vehicle_set)
+                        {
+                            if (all_peds.Count > 0)
+                            {
+                                if (!Player_Ped.IsOnFoot)
+                                {
+                                    if (Player_Ped.CurrentVehicle != null)
+                                    {
+                                        if (Player_Ped.CurrentVehicle == all_peds[0].CurrentVehicle)
+                                        {
+                                            ridetime_started = Game.GameTime;
+                                        }
                                     }
                                 }
                             }
@@ -112,6 +138,7 @@ namespace GTA_Passanger_Mod
                     }
                 }
 
+                //increase speed
                 if (e.KeyCode == System.Windows.Forms.Keys.Right && vehicle_set)
                 {
                     if(speed < 50)
@@ -131,6 +158,7 @@ namespace GTA_Passanger_Mod
                     GTA.UI.ShowSubtitle("Speed increased to : " + speed);
                 }
 
+                //decrease speed
                 if (e.KeyCode == System.Windows.Forms.Keys.Left && vehicle_set)
                 {
                     if (speed > 1)
@@ -150,6 +178,7 @@ namespace GTA_Passanger_Mod
                     GTA.UI.ShowSubtitle("Speed decreased to : " + speed);
                 }
 
+                //change driving mode Normal/Rushed
                 if (e.KeyCode == System.Windows.Forms.Keys.OemPeriod)
                 {
                     if (driving_style == DrivingStyle.Normal)
@@ -164,9 +193,30 @@ namespace GTA_Passanger_Mod
                 }
 
                 if (vehicle_set && e.KeyCode == System.Windows.Forms.Keys.F)
-                {
-                    if (all_peds.Count > 0)
+                {   
+                    if (Give_Tip)
                     {   
+                        int ridetime_ended = Game.GameTime - ridetime_started;
+                        int minimum_Money_Balance = (Game.Player.Money * 10) / 100;
+
+                        if (minimum_Money_Balance < 100)
+                        {
+                            minimum_Money_Balance = 100;
+                        }
+
+                        if (Game.Player.Money > minimum_Money_Balance)
+                        {   
+                            UI.Notify("Ride time is : " + ridetime_ended.ToString());
+                            UI.Notify("Minimum Money Balance : " + minimum_Money_Balance.ToString());
+                        }
+                        else
+                        {
+                            UI.Notify("Reached there : " + ridetime_ended.ToString());
+                        }
+                    }
+
+                    if (all_peds.Count > 0)
+                    {
                         foreach (var item in all_peds)
                         {
                             item.MarkAsNoLongerNeeded();
@@ -174,6 +224,8 @@ namespace GTA_Passanger_Mod
                         all_peds.Clear();
                         GTA.UI.Notify("Cleared everything");
                     }
+
+                    vehicle_set = false;
                 }
             }
         }
